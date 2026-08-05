@@ -63,7 +63,7 @@ function candidates(h) {
 }
 
 function rowValues(row,index=0) {
-  const value=field=>row.querySelector(`[data-field="${field}"]`).value.trim();
+  const value=field=>row.querySelector(`[data-field="${field}"]`)?.value.trim()||'';
   const type=value('type');
   const rule=ruleById(value('ruleId'));
   return {index:index+1,type,type,typeLabel:row.querySelector('[data-field="type"] option:checked').textContent,id:value('id'),width:n(value('width')),depth:n(value('depth')),ruleId:rule?.id||'',nozzle:rule?.nozzle||'',points:rule?.points||0,allowableHeight:{minMm:rule?.minHeight||0,maxMm:rule?.maxHeight||0},maxWidth:rule?.maxWidth||rule?.maxSide||rule?.maxDiameter||0,maxDepth:rule?.maxDepth||0,manualSection:rule?`Rev. 13 p. ${rule.page}, Fig. ${rule.figure}`:'',rule:rule||null};
