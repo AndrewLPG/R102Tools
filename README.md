@@ -14,14 +14,14 @@ available flow points = controlled-manual tank capacity − design reserve
 margin = available − required
 ```
 
-The designer enters the hazard type, cooking-area dimensions and proposed nozzle height. The tool filters the encoded appliance-specific, single-nozzle rules from ANSUL R-102 Manual Part No. 418087, Rev. 13, ranks compatible options by flow-point demand, and lets the designer select a nozzle. The selected rule, limits, page and figure are retained in the audit export. Pipe length, fittings, elevation, detection and interfaces are captured but not automatically accepted.
+The designer enters the hazard type and cooking-area dimensions. The tool filters the encoded appliance-specific, single-nozzle rules from ANSUL R-102 Manual Part No. 418087, Rev. 13, ranks compatible options by flow-point demand, and shows each option's allowable nozzle-tip height range. The selected rule, limits, height range, page and figure are retained in the audit export. Pipe length, fittings, elevation, detection and interfaces are captured but not automatically accepted.
 
 Current suggestion coverage includes single-nozzle, appliance-specific rules for fryers without dripboards, unobstructed ranges, griddles, woks, and several char-broiler types. It does not automate multiple-nozzle modularisation, fryer dripboards, overlapping protection, listed model-specific applications, obstruction variants, nozzle positioning/aiming or distribution piping.
 
 ## Required inputs
 
 - Project, site, designer, jurisdiction, design approach, manual part/revision/date
-- Each supported appliance: tag, specific type, cooking dimensions and proposed nozzle-tip height
+- Each supported appliance: tag, specific type and cooking dimensions
 - A user-selected nozzle from the compatible Rev. 13 suggestions
 - Tank/system model, controlled-manual flow-point capacity and reserve
 - Distribution-pipe length, fittings and elevation for audit
