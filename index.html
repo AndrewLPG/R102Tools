@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Auditable design-assistance worksheet for ANSUL R-102 restaurant suppression systems.">
+  <title>R-102 Design Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">R</span><div><strong>R-102 Design Assistant</strong><small>Auditable preliminary worksheet</small></div></div>
+    <div class="status"><span></span>Draft only</div>
+  </header>
+
+  <main>
+    <section class="warning" aria-labelledby="safety-title">
+      <div class="warning-icon">!</div>
+      <div><h1 id="safety-title">Design assistance—not an approved system design</h1><p>This worksheet does not replace the latest ANSUL R-102 Design, Installation, Recharge and Maintenance Manual, product listings, the authority having jurisdiction (AHJ), or review by an ANSUL-trained and authorised designer. Never install, modify, commission, or certify a system from this output alone.</p></div>
+    </section>
+
+    <nav class="steps" aria-label="Worksheet sections">
+      <a href="#project">1 <span>Project</span></a><a href="#hazards">2 <span>Hazards</span></a><a href="#system">3 <span>System</span></a><a href="#review">4 <span>Review</span></a>
+    </nav>
+
+    <form id="design-form">
+      <section class="card" id="project">
+        <div class="section-head"><div><span class="eyebrow">01 / PROJECT</span><h2>Design basis</h2></div><span class="pill neutral">Required</span></div>
+        <div class="grid three">
+          <label>Project name<input name="projectName" required placeholder="e.g. Riverside Kitchen"></label>
+          <label>Site / address<input name="site" required placeholder="Site and city"></label>
+          <label>Designer<input name="designer" required placeholder="Name / company"></label>
+          <label>Jurisdiction<select name="jurisdiction" required><option value="">Select…</option><option>Australia / NZ</option><option>United States / Canada</option><option>European Union / UK</option><option>Other</option></select></label>
+          <label>Design approach<select name="approach" required><option value="">Select…</option><option>Appliance-specific</option><option>Overlapping</option></select></label>
+          <label>Manual reference<input name="manualRef" required placeholder="Part no., revision and date"></label>
+        </div>
+        <div class="checkline"><input type="checkbox" id="manual-confirm" name="manualConfirmed"><label for="manual-confirm">I have access to the current, jurisdiction-appropriate ANSUL manual and will verify every selection against it.</label></div>
+      </section>
+
+      <section class="card" id="hazards">
+        <div class="section-head"><div><span class="eyebrow">02 / HAZARDS</span><h2>Protected hazards</h2><p>Add every appliance and ventilation hazard. Limits and flow-point values must come from your controlled manual.</p></div><button type="button" class="secondary" id="add-hazard">+ Add hazard</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Hazard</th><th>Dimensions (mm)</th><th>Nozzle / points</th><th>Manual limits</th><th></th></tr></thead><tbody id="hazard-rows"></tbody></table></div>
+        <div class="empty" id="empty-state">No hazards yet. Add the first appliance, plenum, or duct.</div>
+      </section>
+
+      <section class="card" id="system">
+        <div class="section-head"><div><span class="eyebrow">03 / SYSTEM</span><h2>Agent & distribution</h2></div></div>
+        <div class="grid three">
+          <label>Selected tank / system<input name="tankModel" required placeholder="Model / part number"></label>
+          <label>Usable flow-point capacity<input name="capacity" type="number" min="0.1" step="0.1" required placeholder="From current manual"></label>
+          <label>Reserve policy<input name="reserve" type="number" min="0" step="0.1" value="0" required><small>Flow points held as design margin</small></label>
+          <label>Pipe length (m)<input name="pipeLength" type="number" min="0" step="0.1" required></label>
+          <label>Equivalent fittings<input name="fittings" type="number" min="0" step="1" required></label>
+          <label>Maximum elevation change (m)<input name="elevation" type="number" min="0" step="0.1" required></label>
+        </div>
+        <div class="note">Pipe length, fittings, branch arrangement and elevation are recorded for audit only in this first version. Confirm all distribution-piping limits directly against the current manual.</div>
+        <div class="check-grid">
+          <label><input type="checkbox" name="ductCovered"> Duct protection included</label>
+          <label><input type="checkbox" name="plenumCovered"> Plenum protection included</label>
+          <label><input type="checkbox" name="fuelInterlock"> Fuel/electric shutoff identified</label>
+          <label><input type="checkbox" name="manualPull"> Manual pull station identified</label>
+          <label><input type="checkbox" name="detection"> Detection coverage reviewed</label>
+          <label><input type="checkbox" name="alarmInterface"> Alarm/building interface reviewed</label>
+        </div>
+      </section>
+
+      <section class="card" id="review">
+        <div class="section-head"><div><span class="eyebrow">04 / REVIEW</span><h2>Calculation & validation</h2></div><button type="submit" class="primary">Run validation</button></div>
+        <div class="summary-grid">
+          <div class="metric"><span>Required</span><strong id="required-points">0.0</strong><small>flow points</small></div>
+          <div class="metric"><span>Available</span><strong id="available-points">—</strong><small>after reserve</small></div>
+          <div class="metric"><span>Margin</span><strong id="margin-points">—</strong><small>flow points</small></div>
+          <div class="metric"><span>Checks</span><strong id="check-score">0 / 0</strong><small>passing</small></div>
+        </div>
+        <div id="results" class="results" aria-live="polite"><p>Complete the worksheet and run validation. Results update automatically as hazards change.</p></div>
+        <label class="approval"><input type="checkbox" id="approval"><span><strong>Final qualified-person review</strong><small>I confirm every input, coverage rule, nozzle selection, flow-point allocation, pipe limitation, detection arrangement, interlock, and applicable code requirement has been independently checked.</small></span></label>
+        <div class="actions"><button type="button" class="secondary" id="save-json">Export audit JSON</button><button type="button" class="secondary" id="print-report">Print / PDF report</button><button type="button" class="ghost" id="reset-form">Clear draft</button></div>
+      </section>
+    </form>
+  </main>
+
+  <footer><p>Preliminary design worksheet • Calculations are deterministic and included in exported audit data</p><p>ANSUL and R-102 are trademarks of their respective owners. This independent tool is not affiliated with or endorsed by Johnson Controls.</p></footer>
+  <template id="hazard-template"><tr>
+    <td><select data-field="type"><option>Fryer</option><option>Griddle</option><option>Range</option><option>Wok</option><option>Charbroiler</option><option>Broiler</option><option>Tilting skillet</option><option>Duct</option><option>Plenum</option><option>Other</option></select><input data-field="id" placeholder="Tag, e.g. F-01"></td>
+    <td><div class="dims"><input data-field="width" type="number" min="1" placeholder="W"><span>×</span><input data-field="depth" type="number" min="1" placeholder="D"><span>×</span><input data-field="height" type="number" min="0" placeholder="H"></div></td>
+    <td><input data-field="nozzle" placeholder="Nozzle ID"><input data-field="points" type="number" min="0.1" step="0.1" placeholder="Flow points"></td>
+    <td><div class="dims"><input data-field="maxWidth" type="number" min="1" placeholder="Max W"><span>×</span><input data-field="maxDepth" type="number" min="1" placeholder="Max D"></div><input data-field="manualSection" placeholder="Manual section / table"></td>
+    <td><button type="button" class="remove" aria-label="Remove hazard">×</button></td>
+  </tr></template>
+  <script src="app.js"></script>
+</body>
+</html>
