@@ -46,8 +46,7 @@ const n = value => Number.parseFloat(value) || 0;
 const ruleById = id => NOZZLE_RULES.find(rule=>rule.id===id);
 
 function matches(rule,h) {
-  if(!rule.types.includes(h.type)||!h.width||!h.depth||!h.height) return false;
-  if(h.height<rule.minHeight||h.height>rule.maxHeight) return false;
+  if(!rule.types.includes(h.type)||!h.width||!h.depth) return false;
   if(h.type==='wok') return h.width>=rule.minDiameter&&h.width<=rule.maxDiameter&&h.depth>=rule.minDepth&&h.depth<=rule.maxDepth;
   if(rule.maxArea&&h.width*h.depth>rule.maxArea) return false;
   if(rule.maxSide&&Math.max(h.width,h.depth)>rule.maxSide) return false;
@@ -67,24 +66,24 @@ function rowValues(row,index=0) {
   const value=field=>row.querySelector(`[data-field="${field}"]`).value.trim();
   const type=value('type');
   const rule=ruleById(value('ruleId'));
-  return {index:index+1,type,type,typeLabel:row.querySelector('[data-field="type"] option:checked').textContent,id:value('id'),width:n(value('width')),depth:n(value('depth')),height:n(value('height')),ruleId:rule?.id||'',nozzle:rule?.nozzle||'',points:rule?.points||0,maxWidth:rule?.maxWidth||rule?.maxSide||rule?.maxDiameter||0,maxDepth:rule?.maxDepth||0,manualSection:rule?`Rev. 13 p. ${rule.page}, Fig. ${rule.figure}`:'',rule:rule||null};
+  return {index:index+1,type,type,typeLabel:row.querySelector('[data-field="type"] option:checked').textContent,id:value('id'),width:n(value('width')),depth:n(value('depth')),ruleId:rule?.id||'',nozzle:rule?.nozzle||'',points:rule?.points||0,allowableHeight:{minMm:rule?.minHeight||0,maxMm:rule?.maxHeight||0},maxWidth:rule?.maxWidth||rule?.maxSide||rule?.maxDiameter||0,maxDepth:rule?.maxDepth||0,manualSection:rule?`Rev. 13 p. ${rule.page}, Fig. ${rule.figure}`:'',rule:rule||null};
 }
 
 function updateRow(row,preserve=true) {
   const h=rowValues(row); const select=row.querySelector('[data-field="ruleId"]'); const previous=preserve?select.value:''; const found=candidates(h);
-  select.innerHTML=`<option value="">${h.width&&h.depth&&h.height?(found.length?'Select a compatible nozzle':'No compatible single-nozzle rule'):'Enter all dimensions first'}</option>`+found.map(rule=>`<option value="${rule.id}">${escapeHtml(rule.nozzle)} — ${rule.points} flow point${rule.points===1?'':'s'} — p. ${rule.page}</option>`).join('');
+  select.innerHTML=`<option value="">${h.width&&h.depth?(found.length?'Select a compatible nozzle':'No compatible single-nozzle rule'):'Enter dimensions first'}</option>`+found.map(rule=>`<option value="${rule.id}">${escapeHtml(rule.nozzle)} — ${rule.points} flow point${rule.points===1?'':'s'} — ${rule.minHeight}–${rule.maxHeight} mm high</option>`).join('');
   if(found.some(rule=>rule.id===previous)) select.value=previous;
   const status=row.querySelector('.suggestion-status');
   status.className=`suggestion-status ${found.length?'good':'bad'}`;
-  status.textContent=h.width&&h.depth&&h.height?(found.length?`${found.length} compatible option${found.length===1?'':'s'} — lowest flow first`:'No match. Check dimensions, height, hazard type, or multiple-nozzle requirements.'):'Width, depth and nozzle height required.';
+  status.textContent=h.width&&h.depth?(found.length?`${found.length} dimension-compatible option${found.length===1?'':'s'} — lowest flow first`:'No match. Check dimensions, hazard type, or multiple-nozzle requirements.'):'Width and depth required.';
   const help=row.querySelector('.dimension-help');
-  help.textContent=h.type==='wok'?'Width = wok diameter; depth = pan depth.':h.type.startsWith('fryer')?'Width = frypot length; depth = internal front-to-back depth.':'Cooking-surface width × depth; height is nozzle tip above hazard.';
+  help.textContent=h.type==='wok'?'Width = wok diameter; depth = pan depth.':h.type.startsWith('fryer')?'Width = frypot length; depth = internal front-to-back depth.':'Cooking-surface width × depth.';
   updateRuleSummary(row);
 }
 
 function updateRuleSummary(row) {
   const rule=ruleById(row.querySelector('[data-field="ruleId"]').value); const box=row.querySelector('.rule-summary');
-  box.innerHTML=rule?`<strong>${escapeHtml(rule.nozzle)} · ${rule.points} flow point${rule.points===1?'':'s'}</strong>Rev. 13 p. ${rule.page}, Fig. ${rule.figure}<br>${escapeHtml(rule.note)}`:'No nozzle selected.';
+  box.innerHTML=rule?`<strong>${escapeHtml(rule.nozzle)} · ${rule.points} flow point${rule.points===1?'':'s'}</strong><b>Allowable height:</b> ${rule.minHeight}–${rule.maxHeight} mm<br>Rev. 13 p. ${rule.page}, Fig. ${rule.figure}<br>${escapeHtml(rule.note)}`:'No nozzle selected.';
 }
 
 function addHazard(data={}) {
@@ -93,7 +92,7 @@ function addHazard(data={}) {
   row.querySelectorAll('[data-field]').forEach(el=>{if(data[el.dataset.field]!==undefined)el.value=data[el.dataset.field];});
   updateRow(row,false); if(data.ruleId&&ruleById(data.ruleId)){row.querySelector('[data-field="ruleId"]').value=data.ruleId;updateRuleSummary(row);}
   row.querySelector('.remove').addEventListener('click',()=>{row.remove();refresh();saveDraft();});
-  row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{if(['type','width','depth','height'].includes(el.dataset.field))updateRow(row);else updateRuleSummary(row);refresh();saveDraft();}));
+  row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{if(['type','width','depth'].includes(el.dataset.field))updateRow(row);else updateRuleSummary(row);refresh();saveDraft();}));
   refresh();
 }
 
@@ -103,7 +102,7 @@ function projectData(){const fd=new FormData(form),data=Object.fromEntries(fd.en
 function calculate(){
   const hs=hazards(),d=projectData(),required=hs.reduce((sum,h)=>sum+h.points,0),available=Math.max(0,d.capacity-d.reserve),margin=available-required,checks=[];
   checks.push({level:hs.length?'pass':'error',text:hs.length?`${hs.length} hazard${hs.length===1?'':'s'} recorded.`:'Add at least one protected hazard.'});
-  hs.forEach(h=>{const name=h.id||`${h.typeLabel} ${h.index}`;if(!h.width||!h.depth||!h.height)checks.push({level:'error',text:`${name}: enter width, depth and proposed nozzle height.`});else if(!h.rule)checks.push({level:'error',text:`${name}: select a compatible nozzle; no selection is currently recorded.`});else if(!matches(h.rule,h))checks.push({level:'error',text:`${name}: selected nozzle no longer matches the entered dimensions or height.`});else checks.push({level:'pass',text:`${name}: ${h.nozzle} matches the encoded Rev. 13 limits (p. ${h.rule.page}).`});});
+  hs.forEach(h=>{const name=h.id||`${h.typeLabel} ${h.index}`;if(!h.width||!h.depth)checks.push({level:'error',text:`${name}: enter width and depth.`});else if(!h.rule)checks.push({level:'error',text:`${name}: select a compatible nozzle; no selection is currently recorded.`});else if(!matches(h.rule,h))checks.push({level:'error',text:`${name}: selected nozzle no longer matches the entered dimensions.`});else checks.push({level:'pass',text:`${name}: ${h.nozzle} matches the encoded dimensional limits; allowable nozzle height is ${h.rule.minHeight}–${h.rule.maxHeight} mm (p. ${h.rule.page}).`});});
   checks.push({level:d.manualConfirmed?'pass':'error',text:d.manualConfirmed?'Current manual access confirmed.':'Confirm access to the current jurisdiction-appropriate manual.'});
   checks.push({level:d.capacity>0?(margin>=0?'pass':'error'):'error',text:d.capacity>0?(margin>=0?`Agent capacity margin is ${margin.toFixed(1)} flow points.`:`Required allocation exceeds available capacity by ${Math.abs(margin).toFixed(1)} flow points.`):'Enter the selected system capacity from the current manual.'});
   if(!d.ductCovered)checks.push({level:'warn',text:'Duct protection has not been confirmed.'});if(!d.plenumCovered)checks.push({level:'warn',text:'Plenum protection has not been confirmed.'});
