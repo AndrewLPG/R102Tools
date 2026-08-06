@@ -45,7 +45,17 @@ const NOZZLE_RULES = [
   {id:'char-wood-3n',types:['char-wood'],nozzle:'3N',points:3,maxArea:464000,maxSide:762,minHeight:355,maxHeight:1016,page:'4-27',figure:'4-69',note:'Wood depth max 152 mm; pieces max 102 mm diameter.'},
 
   {id:'wok-260',types:['wok'],nozzle:'260',points:2,minDiameter:355,maxDiameter:762,minDepth:95,maxDepth:203,minHeight:889,maxHeight:1143,page:'4-28',figure:'4-70',note:'Position within 25 mm radius of center; point vertically down.'},
-  {id:'wok-1n',types:['wok'],nozzle:'1N',points:1,minDiameter:279,maxDiameter:609,minDepth:76,maxDepth:152,minHeight:762,maxHeight:1016,page:'4-28',figure:'4-71',note:'Position along or within perimeter; aim at center.'}
+  {id:'wok-1n',types:['wok'],nozzle:'1N',points:1,minDiameter:279,maxDiameter:609,minDepth:76,maxDepth:152,minHeight:762,maxHeight:1016,page:'4-28',figure:'4-71',note:'Position along or within perimeter; aim at center.'},
+  {id:'salamander-1n-overhead',types:['salamander'],nozzle:'1N',points:1,maxWidth:736,maxDepth:406,minHeight:0,maxHeight:304,page:'4-24',figure:'4-59',note:'Overhead option. Measure the internal broiler chamber. Locate in line with a vertical edge, 152–304 mm in front, and aim at the opening centre.'},
+  {id:'salamander-1f-overhead',types:['salamander'],nozzle:'1F',points:1,maxWidth:787,maxDepth:393,minHeight:304,maxHeight:457,page:'4-24',figure:'4-60',note:'Overhead option. Measure the internal broiler chamber. Locate on the opening centreline, 203–304 mm in front, and observe nozzle-tip orientation.'},
+  {id:'salamander-1n-local',types:['salamander'],nozzle:'1N — local',points:1,maxWidth:787,maxDepth:381,heightText:'Local mount above grate',page:'4-24',figure:'4-61',note:'Affix to the cooking-chamber side above the grate on either vertical edge; aim at the centre of the grates.'},
+  {id:'duct-rect-1w',types:['duct-rect'],nozzle:'1W',points:1,maxPerimeter:1270,heightText:'51–203 mm into duct opening',page:'4-1',figure:'4-1',note:'Rectangular duct perimeter must not exceed 1270 mm. Centre the nozzle and discharge into the opening.'},
+  {id:'duct-rect-2w',types:['duct-rect'],nozzle:'2W',points:2,maxPerimeter:2540,heightText:'51–203 mm into duct opening',page:'4-1',figure:'4-1',note:'Rectangular duct perimeter must not exceed 2540 mm. Centre the nozzle and discharge into the opening.'},
+  {id:'duct-round-1w',types:['duct-round'],nozzle:'1W',points:1,maxDiameter:406,heightText:'51–203 mm into duct opening',page:'4-1',figure:'4-1',note:'Round duct diameter must not exceed 406 mm. Centre the nozzle and discharge into the opening.'},
+  {id:'duct-round-2w',types:['duct-round'],nozzle:'2W',points:2,maxDiameter:812,heightText:'51–203 mm into duct opening',page:'4-1',figure:'4-1',note:'Round duct diameter must not exceed 812 mm. Centre the nozzle and discharge into the opening.'},
+  {id:'plenum-h-single-1n',types:['plenum-horizontal'],nozzle:'1N — single bank',points:1,maxWidth:3048,maxDepth:1219,heightText:'2/3 filter height; 0–152 mm from end',page:'4-6',figure:'4-9',note:'One module: up to 3048 mm of single-bank plenum length by 1219 mm width. Locate 51–102 mm from filter face and aim down the length.'},
+  {id:'plenum-h-v-1w',types:['plenum-horizontal'],nozzle:'1W — V bank',points:1,maxWidth:1829,maxDepth:1219,heightText:'1/3 filter height; 0–152 mm from end',page:'4-6',figure:'4-10',note:'One module: up to 1829 mm of V-bank plenum length by 1219 mm width. Locate above the filter and aim down the length.'},
+  {id:'plenum-h-v-two-1n',types:['plenum-horizontal'],nozzle:'2 × 1N — V bank',points:2,maxWidth:3048,maxDepth:1219,heightText:'51–102 mm from filter faces',page:'4-6',figure:'4-11',note:'One module: up to 3048 mm of V-bank plenum length by 1219 mm width. Use one nozzle in each bank and aim down the length.'}
 ];
 
 const escapeHtml = s => String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -53,10 +63,12 @@ const n = value => Number.parseFloat(value) || 0;
 const ruleById = id => NOZZLE_RULES.find(rule=>rule.id===id);
 
 function matches(rule,h) {
-  if(!rule.types.includes(h.type)||!h.width||!h.depth) return false;
+  if(!rule.types.includes(h.type)||!h.width||(h.type!=='duct-round'&&!h.depth)) return false;
   // The manual's metric dimensions are rounded equivalents of its native inch limits.
   // Allow 1 mm at wok boundaries so 24 × 6 in and 30 × 8 in remain valid after conversion.
   if(h.type==='wok') { const tolerance=1; return h.width>=rule.minDiameter-tolerance&&h.width<=rule.maxDiameter+tolerance&&h.depth>=rule.minDepth-tolerance&&h.depth<=rule.maxDepth+tolerance; }
+  if(h.type==='duct-round') return h.width<=rule.maxDiameter;
+  if(rule.maxPerimeter&&2*(h.width+h.depth)>rule.maxPerimeter) return false;
   if(rule.maxArea&&h.width*h.depth>rule.maxArea) return false;
   if(rule.maxSide&&Math.max(h.width,h.depth)>rule.maxSide) return false;
   if(rule.maxWidth&&rule.maxDepth) {
@@ -71,6 +83,9 @@ function candidates(h) {
   return NOZZLE_RULES.filter(rule=>matches(rule,h)).sort((a,b)=>a.points-b.points||(a.maxArea||a.maxWidth*a.maxDepth)-(b.maxArea||b.maxWidth*b.maxDepth));
 }
 
+const dimensionsComplete=h=>Boolean(h.width&&(h.type==='duct-round'||h.depth));
+const placementLabel=rule=>rule.heightText||`${rule.minHeight}–${rule.maxHeight} mm high`;
+
 function rowValues(row,index=0) {
   const value=field=>row.querySelector(`[data-field="${field}"]`)?.value.trim()||'';
   const type=value('type');
@@ -81,14 +96,19 @@ function rowValues(row,index=0) {
 
 function updateRow(row,preserve=true) {
   const h=rowValues(row); const select=row.querySelector('[data-field="ruleId"]'); const previous=preserve?select.value:''; const found=candidates(h);
-  select.innerHTML=`<option value="">${h.width&&h.depth?(found.length?'Select a compatible nozzle':'No compatible single-nozzle rule'):'Enter dimensions first'}</option>`+found.map(rule=>`<option value="${rule.id}">${escapeHtml(rule.nozzle)} — ${rule.points} flow point${rule.points===1?'':'s'} — ${rule.minHeight}–${rule.maxHeight} mm high</option>`).join('');
+  select.innerHTML=`<option value="">${dimensionsComplete(h)?(found.length?'Select a compatible nozzle':'No compatible single-nozzle rule'):'Enter dimensions first'}</option>`+found.map(rule=>`<option value="${rule.id}">${escapeHtml(rule.nozzle)} — ${rule.points} flow point${rule.points===1?'':'s'} — ${escapeHtml(placementLabel(rule))}</option>`).join('');
   if(found.some(rule=>rule.id===previous)) select.value=previous;
   const status=row.querySelector('.suggestion-status');
   status.className=`suggestion-status ${found.length?'good':'bad'}`;
-  status.textContent=h.width&&h.depth?(found.length?`${found.length} dimension-compatible option${found.length===1?'':'s'} — lowest flow first`:h.type==='wok'?'No match. Woks require 279–762 mm diameter and 76–203 mm pan depth, depending on nozzle.':'No match. Check dimensions, hazard type, or multiple-nozzle requirements.'):'Both dimensions are required.';
+  status.textContent=dimensionsComplete(h)?(found.length?`${found.length} dimension-compatible option${found.length===1?'':'s'} — lowest flow first`:h.type==='wok'?'No match. Woks require 279–762 mm diameter and 76–203 mm pan depth, depending on nozzle.':'No match. Check dimensions, configuration, or multiple-nozzle requirements.'):(h.type==='duct-round'?'Diameter is required.':'Both dimensions are required.');
   const help=row.querySelector('.dimension-help');
   const widthInput=row.querySelector('[data-field="width"]'),depthInput=row.querySelector('[data-field="depth"]');
+  depthInput.disabled=h.type==='duct-round';
   if(h.type==='wok'){widthInput.placeholder='Wok diameter';depthInput.placeholder='Pan depth';help.textContent='Diameter 279–762 mm (11–30 in); pan depth 76–203 mm (3–8 in), depending on nozzle.';}
+  else if(h.type==='salamander'){widthInput.placeholder='Chamber width';depthInput.placeholder='Chamber depth';help.textContent='Internal broiler chamber width × depth.';}
+  else if(h.type==='duct-rect'){widthInput.placeholder='Duct width';depthInput.placeholder='Duct height';help.textContent='Internal duct width × height. Single-nozzle options only; larger ducts require manual modular design.';}
+  else if(h.type==='duct-round'){widthInput.placeholder='Duct diameter';depthInput.placeholder='Not used';help.textContent='Enter internal round-duct diameter only. Single-nozzle options up to 812 mm (32 in).';}
+  else if(h.type==='plenum-horizontal'){widthInput.placeholder='Plenum length';depthInput.placeholder='Filter-bank width';help.textContent='Horizontal plenum length × filter-bank width. Options shown are for one protected module.';}
   else if(h.type.startsWith('fryer')){widthInput.placeholder='Frypot length';depthInput.placeholder='Frypot depth';help.textContent='Internal frypot length × front-to-back depth.';}
   else{widthInput.placeholder='Width';depthInput.placeholder='Depth';help.textContent='Cooking-surface width × depth.';}
   updateRuleSummary(row);
@@ -96,7 +116,7 @@ function updateRow(row,preserve=true) {
 
 function updateRuleSummary(row) {
   const rule=ruleById(row.querySelector('[data-field="ruleId"]').value); const box=row.querySelector('.rule-summary');
-  box.innerHTML=rule?`<strong>${escapeHtml(rule.nozzle)} · ${rule.points} flow point${rule.points===1?'':'s'}</strong><b>Allowable height:</b> ${rule.minHeight}–${rule.maxHeight} mm<br>Rev. 13 p. ${rule.page}, Fig. ${rule.figure}<br>${escapeHtml(rule.note)}`:'No nozzle selected.';
+  box.innerHTML=rule?`<strong>${escapeHtml(rule.nozzle)} · ${rule.points} flow point${rule.points===1?'':'s'}</strong><b>Placement:</b> ${escapeHtml(placementLabel(rule))}<br>Rev. 13 p. ${rule.page}, Fig. ${rule.figure}<br>${escapeHtml(rule.note)}`:'No nozzle selected.';
 }
 
 function addHazard(data={}) {
@@ -115,12 +135,12 @@ function projectData(){const fd=new FormData(form),data=Object.fromEntries(fd.en
 function calculate(){
   const hs=hazards(),d=projectData(),required=hs.reduce((sum,h)=>sum+h.points,0),available=Math.max(0,d.capacity-d.reserve),margin=available-required,checks=[];
   checks.push({level:hs.length?'pass':'error',text:hs.length?`${hs.length} hazard${hs.length===1?'':'s'} recorded.`:'Add at least one protected hazard.'});
-  hs.forEach(h=>{const name=h.id||`${h.typeLabel} ${h.index}`;if(!h.width||!h.depth)checks.push({level:'error',text:`${name}: enter width and depth.`});else if(!h.rule)checks.push({level:'error',text:`${name}: select a compatible nozzle; no selection is currently recorded.`});else if(!matches(h.rule,h))checks.push({level:'error',text:`${name}: selected nozzle no longer matches the entered dimensions.`});else checks.push({level:'pass',text:`${name}: ${h.nozzle} matches the encoded dimensional limits; allowable nozzle height is ${h.rule.minHeight}–${h.rule.maxHeight} mm (p. ${h.rule.page}).`});});
+  hs.forEach(h=>{const name=h.id||`${h.typeLabel} ${h.index}`;if(!dimensionsComplete(h))checks.push({level:'error',text:`${name}: enter the required dimensions.`});else if(!h.rule)checks.push({level:'error',text:`${name}: select a compatible nozzle; no selection is currently recorded.`});else if(!matches(h.rule,h))checks.push({level:'error',text:`${name}: selected nozzle no longer matches the entered dimensions.`});else checks.push({level:'pass',text:`${name}: ${h.nozzle} matches the encoded dimensional limits; placement is ${placementLabel(h.rule)} (p. ${h.rule.page}).`});});
   checks.push({level:d.manualConfirmed?'pass':'error',text:d.manualConfirmed?'Current manual access confirmed.':'Confirm access to the current jurisdiction-appropriate manual.'});
   checks.push({level:d.capacity>0?(margin>=0?'pass':'error'):'error',text:d.capacity>0?(margin>=0?`${d.tankLabel}: capacity margin is ${margin.toFixed(1)} flow points.`:`${d.tankLabel}: required allocation exceeds available capacity by ${Math.abs(margin).toFixed(1)} flow points.`):'Select a tank/system arrangement.'});
   if(!d.ductCovered)checks.push({level:'warn',text:'Duct protection has not been confirmed.'});if(!d.plenumCovered)checks.push({level:'warn',text:'Plenum protection has not been confirmed.'});
   for(const [key,label] of [['fuelInterlock','Fuel/electric shutoff'],['manualPull','Manual pull station'],['detection','Detection coverage'],['alarmInterface','Alarm/building interface']])if(!d[key])checks.push({level:'warn',text:`${label} review is incomplete.`});
-  checks.push({level:'warn',text:'Suggestions cover encoded appliance-specific single-nozzle rules only. Confirm placement, aiming, obstructions, special notices, multiple-nozzle rules and current listings in the manual.'});
+  checks.push({level:'warn',text:'Suggestions cover only the encoded appliance, single-nozzle duct, and one-module plenum rules. Confirm placement, aiming, obstructions, modularisation, special notices and current listings in the manual.'});
   return {required,available,margin,checks,project:d,hazards:hs.map(({rule,...h})=>({...h,rule:rule?{...rule}:null}))};
 }
 
