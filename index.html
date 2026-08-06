@@ -78,11 +78,11 @@
   <footer><p>Preliminary design worksheet • Calculations are deterministic and included in exported audit data</p><p>ANSUL and R-102 are trademarks of their respective owners. This independent tool is not affiliated with or endorsed by Johnson Controls.</p></footer>
   <template id="hazard-template"><tr>
     <td><select data-field="type"><option value="fryer-full">Fryer — full vat, no dripboard</option><option value="fryer-split">Fryer — split vat, no dripboard</option><option value="range">Range — no obstruction</option><option value="griddle">Griddle</option><option value="wok">Wok</option><option value="char-gas-electric">Char-broiler — gas-radiant/electric</option><option value="char-electric">Char-broiler — electric (optional)</option><option value="char-lava">Char-broiler — lava rock/ceramic</option><option value="char-charcoal">Broiler — natural charcoal</option><option value="char-wood">Char-broiler — wood fuel</option></select><input data-field="id" placeholder="Tag, e.g. F-01"></td>
-    <td><div class="dims"><input data-field="width" type="number" min="1" placeholder="Width"><span>×</span><input data-field="depth" type="number" min="1" placeholder="Depth"></div><small class="dimension-help"></small></td>
+    <td><div class="dims"><input data-field="width" type="number" min="0.1" step="0.1" placeholder="Width"><span>×</span><input data-field="depth" type="number" min="0.1" step="0.1" placeholder="Depth"><select data-field="unit" aria-label="Hazard dimension unit"><option value="mm">mm</option><option value="in">in</option></select></div><small class="dimension-help"></small></td>
     <td><select data-field="ruleId" class="nozzle-select"><option value="">Enter dimensions first</option></select><div class="suggestion-status"></div></td>
     <td><div class="rule-summary">No nozzle selected.</div></td>
     <td><button type="button" class="remove" aria-label="Remove hazard">×</button></td>
   </tr></template>
-  <script src="app.js?v=20260806-1"></script>
+  <script src="app.js?v=20260806-2"></script>
 </body>
 </html>
