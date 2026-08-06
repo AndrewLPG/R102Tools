@@ -4,6 +4,13 @@ const template = document.querySelector('#hazard-template');
 const empty = document.querySelector('#empty-state');
 const STORAGE_KEY = 'r102-design-assistant-v2';
 const RULE_SOURCE = { manual: 'ANSUL R-102 Restaurant Fire Suppression Manual', part: '418087', revision: '13', date: '2022-NOV-14' };
+const SYSTEM_ARRANGEMENTS = {
+  '3gal-lt30r': {label:'3.0 Gallon with LT-30R',capacity:11},
+  '6gal-manifold-double': {label:'6.0 Gallon Manifolded with Double Tank',capacity:22},
+  '9gal-double': {label:'9.0 Gallon with Double Tank',capacity:33},
+  '9gal-actuator': {label:'9.0 Gallon, Manifold with Regulated Actuator, Double Tank and LT-A-101-30',capacity:33},
+  '12gal-actuator': {label:'12.0 Gallon with Regulated Actuator, Double Tank and LT-A-101-30',capacity:44}
+};
 
 const NOZZLE_RULES = [
   // Fryer dimensions are maximum internal frypot depth x length; no dripboard.
@@ -97,22 +104,22 @@ function addHazard(data={}) {
 }
 
 function hazards(){return [...rows.children].map((row,index)=>rowValues(row,index));}
-function projectData(){const fd=new FormData(form),data=Object.fromEntries(fd.entries());data.capacity=n(data.capacity);data.reserve=n(data.reserve);data.pipeLength=n(data.pipeLength);data.fittings=n(data.fittings);data.elevation=n(data.elevation);for(const key of ['manualConfirmed','ductCovered','plenumCovered','fuelInterlock','manualPull','detection','alarmInterface'])data[key]=fd.has(key);return data;}
+function projectData(){const fd=new FormData(form),data=Object.fromEntries(fd.entries()),arrangement=SYSTEM_ARRANGEMENTS[data.tankModel];data.tankLabel=arrangement?.label||'';data.capacity=arrangement?.capacity||0;data.reserve=n(data.reserve);for(const key of ['manualConfirmed','ductCovered','plenumCovered','fuelInterlock','manualPull','detection','alarmInterface'])data[key]=fd.has(key);return data;}
 
 function calculate(){
   const hs=hazards(),d=projectData(),required=hs.reduce((sum,h)=>sum+h.points,0),available=Math.max(0,d.capacity-d.reserve),margin=available-required,checks=[];
   checks.push({level:hs.length?'pass':'error',text:hs.length?`${hs.length} hazard${hs.length===1?'':'s'} recorded.`:'Add at least one protected hazard.'});
   hs.forEach(h=>{const name=h.id||`${h.typeLabel} ${h.index}`;if(!h.width||!h.depth)checks.push({level:'error',text:`${name}: enter width and depth.`});else if(!h.rule)checks.push({level:'error',text:`${name}: select a compatible nozzle; no selection is currently recorded.`});else if(!matches(h.rule,h))checks.push({level:'error',text:`${name}: selected nozzle no longer matches the entered dimensions.`});else checks.push({level:'pass',text:`${name}: ${h.nozzle} matches the encoded dimensional limits; allowable nozzle height is ${h.rule.minHeight}–${h.rule.maxHeight} mm (p. ${h.rule.page}).`});});
   checks.push({level:d.manualConfirmed?'pass':'error',text:d.manualConfirmed?'Current manual access confirmed.':'Confirm access to the current jurisdiction-appropriate manual.'});
-  checks.push({level:d.capacity>0?(margin>=0?'pass':'error'):'error',text:d.capacity>0?(margin>=0?`Agent capacity margin is ${margin.toFixed(1)} flow points.`:`Required allocation exceeds available capacity by ${Math.abs(margin).toFixed(1)} flow points.`):'Enter the selected system capacity from the current manual.'});
+  checks.push({level:d.capacity>0?(margin>=0?'pass':'error'):'error',text:d.capacity>0?(margin>=0?`${d.tankLabel}: capacity margin is ${margin.toFixed(1)} flow points.`:`${d.tankLabel}: required allocation exceeds available capacity by ${Math.abs(margin).toFixed(1)} flow points.`):'Select a tank/system arrangement.'});
   if(!d.ductCovered)checks.push({level:'warn',text:'Duct protection has not been confirmed.'});if(!d.plenumCovered)checks.push({level:'warn',text:'Plenum protection has not been confirmed.'});
   for(const [key,label] of [['fuelInterlock','Fuel/electric shutoff'],['manualPull','Manual pull station'],['detection','Detection coverage'],['alarmInterface','Alarm/building interface']])if(!d[key])checks.push({level:'warn',text:`${label} review is incomplete.`});
-  checks.push({level:'warn',text:'Suggestions cover encoded appliance-specific single-nozzle rules only. Confirm placement, aiming, obstructions, special notices, piping, multiple-nozzle rules and current listings in the manual.'});
+  checks.push({level:'warn',text:'Suggestions cover encoded appliance-specific single-nozzle rules only. Confirm placement, aiming, obstructions, special notices, multiple-nozzle rules and current listings in the manual.'});
   return {required,available,margin,checks,project:d,hazards:hs.map(({rule,...h})=>({...h,rule:rule?{...rule}:null}))};
 }
 
 function refresh(showDetails=false){empty.hidden=rows.children.length>0;const result=calculate(),passes=result.checks.filter(x=>x.level==='pass').length;document.querySelector('#required-points').textContent=result.required.toFixed(1);document.querySelector('#available-points').textContent=result.project.capacity?result.available.toFixed(1):'—';document.querySelector('#margin-points').textContent=result.project.capacity?result.margin.toFixed(1):'—';document.querySelector('#check-score').textContent=`${passes} / ${result.checks.length}`;if(showDetails)document.querySelector('#results').innerHTML=`<ul>${result.checks.map(x=>`<li class="${x.level}">${x.level==='pass'?'✓':x.level==='error'?'✕':'!'} ${escapeHtml(x.text)}</li>`).join('')}</ul>`;}
-function auditExport(){const result=calculate();return {schemaVersion:'2.0',tool:'R-102 Design Assistant',generatedAt:new Date().toISOString(),status:document.querySelector('#approval').checked?'qualified-person review recorded':'DRAFT — NOT APPROVED',ruleSource:RULE_SOURCE,disclaimer:'Design assistance only. Suggestions are not approval. Verify every selection, placement and limitation against the controlled manual, listings, applicable codes, AHJ requirements, and an authorised qualified person.',calculation:{formula:'required = sum(selected rule flow points); available = tank capacity - reserve; margin = available - required',requiredFlowPoints:result.required,availableFlowPoints:result.available,marginFlowPoints:result.margin},...result};}
+function auditExport(){const result=calculate();return {schemaVersion:'2.1',tool:'R-102 Design Assistant',generatedAt:new Date().toISOString(),status:document.querySelector('#approval').checked?'qualified-person review recorded':'DRAFT — NOT APPROVED',ruleSource:RULE_SOURCE,systemArrangements:SYSTEM_ARRANGEMENTS,disclaimer:'Design assistance only. Suggestions are not approval. Verify every selection, placement and limitation against the controlled manual, listings, applicable codes, AHJ requirements, and an authorised qualified person.',calculation:{formula:'required = sum(selected rule flow points); available = selected arrangement capacity - reserve; margin = available - required',requiredFlowPoints:result.required,availableFlowPoints:result.available,marginFlowPoints:result.margin},...result};}
 function saveDraft(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({project:projectData(),hazards:hazards().map(({rule,...h})=>h),approval:document.querySelector('#approval').checked}));}catch{}}
 function loadDraft(){try{const draft=JSON.parse(localStorage.getItem(STORAGE_KEY));if(!draft)return;Object.entries(draft.project||{}).forEach(([key,val])=>{const el=form.elements[key];if(!el)return;if(el.type==='checkbox')el.checked=Boolean(val);else el.value=val;});(draft.hazards||[]).forEach(addHazard);document.querySelector('#approval').checked=Boolean(draft.approval);}catch{}}
 
