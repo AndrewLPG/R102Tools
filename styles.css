@@ -5,3 +5,16 @@
 @media print{body{background:white}.topbar,.steps,#add-hazard,.remove,.actions,.primary{display:none!important}main{max-width:none;margin:0;padding:0}.warning,.card{box-shadow:none;break-inside:avoid}.card{padding:18px;margin:10px 0}.warning{margin-bottom:10px}input,select{border:0;border-bottom:1px solid #aaa;border-radius:0}.approval{margin-top:10px}footer{margin:12px 0;padding:0}}
 .catalog-banner{margin:-4px 0 16px;padding:12px 14px;background:#eef5f1;border:1px solid #cfe0d8;border-radius:8px;color:#38564b;font-size:12px;line-height:1.45}.dimension-help{display:block;min-height:16px;margin-top:5px;color:var(--muted);font-size:10px;font-weight:500}.suggestion-status{margin-top:7px;font-size:11px;line-height:1.35}.suggestion-status.good{color:var(--green)}.suggestion-status.bad{color:var(--red)}.rule-summary{min-width:210px;padding:9px;background:#f5f7f6;border-radius:7px;color:#52605b;font-size:11px;line-height:1.45}.rule-summary strong{display:block;color:var(--ink);font-size:12px;margin-bottom:3px}.nozzle-select{font-weight:700;color:var(--green)}
 .dims select[data-field="unit"]{flex:0 0 58px;padding:0 6px}
+
+/* Keep numeric fields clean and make long hazard labels/values readable. */
+input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.topbar{padding-left:max(24px,calc((100% - 1420px)/2));padding-right:max(24px,calc((100% - 1420px)/2))}
+main,footer{max-width:1420px}
+table{min-width:1280px}
+td:first-child{width:225px}
+td:nth-child(2){width:355px}
+td:nth-child(3){width:310px}
+td:nth-child(4){width:320px}
+.dims{gap:7px}
+.dims input{min-width:120px;flex:1 1 135px}
