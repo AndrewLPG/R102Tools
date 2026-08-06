@@ -54,7 +54,9 @@ const ruleById = id => NOZZLE_RULES.find(rule=>rule.id===id);
 
 function matches(rule,h) {
   if(!rule.types.includes(h.type)||!h.width||!h.depth) return false;
-  if(h.type==='wok') return h.width>=rule.minDiameter&&h.width<=rule.maxDiameter&&h.depth>=rule.minDepth&&h.depth<=rule.maxDepth;
+  // The manual's metric dimensions are rounded equivalents of its native inch limits.
+  // Allow 1 mm at wok boundaries so 24 × 6 in and 30 × 8 in remain valid after conversion.
+  if(h.type==='wok') { const tolerance=1; return h.width>=rule.minDiameter-tolerance&&h.width<=rule.maxDiameter+tolerance&&h.depth>=rule.minDepth-tolerance&&h.depth<=rule.maxDepth+tolerance; }
   if(rule.maxArea&&h.width*h.depth>rule.maxArea) return false;
   if(rule.maxSide&&Math.max(h.width,h.depth)>rule.maxSide) return false;
   if(rule.maxWidth&&rule.maxDepth) {
@@ -73,7 +75,8 @@ function rowValues(row,index=0) {
   const value=field=>row.querySelector(`[data-field="${field}"]`)?.value.trim()||'';
   const type=value('type');
   const rule=ruleById(value('ruleId'));
-  return {index:index+1,type,type,typeLabel:row.querySelector('[data-field="type"] option:checked').textContent,id:value('id'),width:n(value('width')),depth:n(value('depth')),ruleId:rule?.id||'',nozzle:rule?.nozzle||'',points:rule?.points||0,allowableHeight:{minMm:rule?.minHeight||0,maxMm:rule?.maxHeight||0},maxWidth:rule?.maxWidth||rule?.maxSide||rule?.maxDiameter||0,maxDepth:rule?.maxDepth||0,manualSection:rule?`Rev. 13 p. ${rule.page}, Fig. ${rule.figure}`:'',rule:rule||null};
+  const unit=value('unit')||'mm',inputWidth=n(value('width')),inputDepth=n(value('depth')),factor=unit==='in'?25.4:1;
+  return {index:index+1,type,type,typeLabel:row.querySelector('[data-field="type"] option:checked').textContent,id:value('id'),unit,inputWidth,inputDepth,width:inputWidth*factor,depth:inputDepth*factor,ruleId:rule?.id||'',nozzle:rule?.nozzle||'',points:rule?.points||0,allowableHeight:{minMm:rule?.minHeight||0,maxMm:rule?.maxHeight||0},maxWidth:rule?.maxWidth||rule?.maxSide||rule?.maxDiameter||0,maxDepth:rule?.maxDepth||0,manualSection:rule?`Rev. 13 p. ${rule.page}, Fig. ${rule.figure}`:'',rule:rule||null};
 }
 
 function updateRow(row,preserve=true) {
@@ -82,9 +85,12 @@ function updateRow(row,preserve=true) {
   if(found.some(rule=>rule.id===previous)) select.value=previous;
   const status=row.querySelector('.suggestion-status');
   status.className=`suggestion-status ${found.length?'good':'bad'}`;
-  status.textContent=h.width&&h.depth?(found.length?`${found.length} dimension-compatible option${found.length===1?'':'s'} — lowest flow first`:'No match. Check dimensions, hazard type, or multiple-nozzle requirements.'):'Width and depth required.';
+  status.textContent=h.width&&h.depth?(found.length?`${found.length} dimension-compatible option${found.length===1?'':'s'} — lowest flow first`:h.type==='wok'?'No match. Woks require 279–762 mm diameter and 76–203 mm pan depth, depending on nozzle.':'No match. Check dimensions, hazard type, or multiple-nozzle requirements.'):'Both dimensions are required.';
   const help=row.querySelector('.dimension-help');
-  help.textContent=h.type==='wok'?'Width = wok diameter; depth = pan depth.':h.type.startsWith('fryer')?'Width = frypot length; depth = internal front-to-back depth.':'Cooking-surface width × depth.';
+  const widthInput=row.querySelector('[data-field="width"]'),depthInput=row.querySelector('[data-field="depth"]');
+  if(h.type==='wok'){widthInput.placeholder='Wok diameter';depthInput.placeholder='Pan depth';help.textContent='Diameter 279–762 mm (11–30 in); pan depth 76–203 mm (3–8 in), depending on nozzle.';}
+  else if(h.type.startsWith('fryer')){widthInput.placeholder='Frypot length';depthInput.placeholder='Frypot depth';help.textContent='Internal frypot length × front-to-back depth.';}
+  else{widthInput.placeholder='Width';depthInput.placeholder='Depth';help.textContent='Cooking-surface width × depth.';}
   updateRuleSummary(row);
 }
 
@@ -99,7 +105,7 @@ function addHazard(data={}) {
   row.querySelectorAll('[data-field]').forEach(el=>{if(data[el.dataset.field]!==undefined)el.value=data[el.dataset.field];});
   updateRow(row,false); if(data.ruleId&&ruleById(data.ruleId)){row.querySelector('[data-field="ruleId"]').value=data.ruleId;updateRuleSummary(row);}
   row.querySelector('.remove').addEventListener('click',()=>{row.remove();refresh();saveDraft();});
-  row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{if(['type','width','depth'].includes(el.dataset.field))updateRow(row);else updateRuleSummary(row);refresh();saveDraft();}));
+  row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{if(['type','width','depth','unit'].includes(el.dataset.field))updateRow(row);else updateRuleSummary(row);refresh();saveDraft();}));
   refresh();
 }
 
@@ -120,7 +126,7 @@ function calculate(){
 
 function refresh(showDetails=false){empty.hidden=rows.children.length>0;const result=calculate(),passes=result.checks.filter(x=>x.level==='pass').length;document.querySelector('#required-points').textContent=result.required.toFixed(1);document.querySelector('#available-points').textContent=result.project.capacity?result.available.toFixed(1):'—';document.querySelector('#margin-points').textContent=result.project.capacity?result.margin.toFixed(1):'—';document.querySelector('#check-score').textContent=`${passes} / ${result.checks.length}`;if(showDetails)document.querySelector('#results').innerHTML=`<ul>${result.checks.map(x=>`<li class="${x.level}">${x.level==='pass'?'✓':x.level==='error'?'✕':'!'} ${escapeHtml(x.text)}</li>`).join('')}</ul>`;}
 function auditExport(){const result=calculate();return {schemaVersion:'2.1',tool:'R-102 Design Assistant',generatedAt:new Date().toISOString(),status:document.querySelector('#approval').checked?'qualified-person review recorded':'DRAFT — NOT APPROVED',ruleSource:RULE_SOURCE,systemArrangements:SYSTEM_ARRANGEMENTS,disclaimer:'Design assistance only. Suggestions are not approval. Verify every selection, placement and limitation against the controlled manual, listings, applicable codes, AHJ requirements, and an authorised qualified person.',calculation:{formula:'required = sum(selected rule flow points); available = selected arrangement capacity - reserve; margin = available - required',requiredFlowPoints:result.required,availableFlowPoints:result.available,marginFlowPoints:result.margin},...result};}
-function saveDraft(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({project:projectData(),hazards:hazards().map(({rule,...h})=>h),approval:document.querySelector('#approval').checked}));}catch{}}
+function saveDraft(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({project:projectData(),hazards:hazards().map(({rule,width,depth,...h})=>({...h,width:h.inputWidth,depth:h.inputDepth})),approval:document.querySelector('#approval').checked}));}catch{}}
 function loadDraft(){try{const draft=JSON.parse(localStorage.getItem(STORAGE_KEY));if(!draft)return;Object.entries(draft.project||{}).forEach(([key,val])=>{const el=form.elements[key];if(!el)return;if(el.type==='checkbox')el.checked=Boolean(val);else el.value=val;});(draft.hazards||[]).forEach(addHazard);document.querySelector('#approval').checked=Boolean(draft.approval);}catch{}}
 
 document.querySelector('#add-hazard').addEventListener('click',()=>{addHazard();saveDraft();});form.addEventListener('input',()=>{refresh();saveDraft();});form.addEventListener('submit',e=>{e.preventDefault();refresh(true);document.querySelector('#results').scrollIntoView({behavior:'smooth',block:'center'});});
