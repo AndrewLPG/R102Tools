@@ -47,14 +47,9 @@
       <section class="card" id="system">
         <div class="section-head"><div><span class="eyebrow">03 / SYSTEM</span><h2>Agent & distribution</h2></div></div>
         <div class="grid three">
-          <label>Selected tank / system<input name="tankModel" required placeholder="Model / part number"></label>
-          <label>Usable flow-point capacity<input name="capacity" type="number" min="0.1" step="0.1" required placeholder="From current manual"></label>
+          <label>Selected tank / system<select name="tankModel" required><option value="">Select arrangement…</option><option value="3gal-lt30r">3.0 Gallon with LT-30R — 11 flow points</option><option value="6gal-manifold-double">6.0 Gallon Manifolded with Double Tank — 22 flow points</option><option value="9gal-double">9.0 Gallon with Double Tank — 33 flow points</option><option value="9gal-actuator">9.0 Gallon, Manifold with Regulated Actuator, Double Tank and LT-A-101-30 — 33 flow points</option><option value="12gal-actuator">12.0 Gallon with Regulated Actuator, Double Tank and LT-A-101-30 — 44 flow points</option></select><small>Capacity is applied automatically from the selected arrangement.</small></label>
           <label>Reserve policy<input name="reserve" type="number" min="0" step="0.1" value="0" required><small>Flow points held as design margin</small></label>
-          <label>Pipe length (m)<input name="pipeLength" type="number" min="0" step="0.1" required></label>
-          <label>Equivalent fittings<input name="fittings" type="number" min="0" step="1" required></label>
-          <label>Maximum elevation change (m)<input name="elevation" type="number" min="0" step="0.1" required></label>
         </div>
-        <div class="note">Pipe length, fittings, branch arrangement and elevation are recorded for audit only in this first version. Confirm all distribution-piping limits directly against the current manual.</div>
         <div class="check-grid">
           <label><input type="checkbox" name="ductCovered"> Duct protection included</label>
           <label><input type="checkbox" name="plenumCovered"> Plenum protection included</label>
@@ -88,6 +83,6 @@
     <td><div class="rule-summary">No nozzle selected.</div></td>
     <td><button type="button" class="remove" aria-label="Remove hazard">×</button></td>
   </tr></template>
-  <script src="app.js?v=20260805-3"></script>
+  <script src="app.js?v=20260806-1"></script>
 </body>
 </html>
