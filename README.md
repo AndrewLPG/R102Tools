@@ -4,7 +4,7 @@ A dependency-free, embeddable preliminary design worksheet for ANSUL R-102 resta
 
 ## Safety and calculation scope
 
-This is **design assistance only**. It does not select or certify nozzles, determine appliance coverage, validate distribution piping, or replace the latest ANSUL manual, product listings, applicable codes, AHJ requirements, or review by an ANSUL-trained authorised person.
+This is **design assistance only**. It does not certify nozzles or appliance coverage, and does not replace the latest ANSUL manual, product listings, applicable codes, AHJ requirements, or review by an ANSUL-trained authorised person.
 
 The first version deliberately calculates only an auditable capacity balance:
 
@@ -14,17 +14,16 @@ available flow points = controlled-manual tank capacity − design reserve
 margin = available − required
 ```
 
-The designer enters the hazard type and cooking-area dimensions. The tool filters the encoded appliance-specific, single-nozzle rules from ANSUL R-102 Manual Part No. 418087, Rev. 13, ranks compatible options by flow-point demand, and shows each option's allowable nozzle-tip height range. The selected rule, limits, height range, page and figure are retained in the audit export. Pipe length, fittings, elevation, detection and interfaces are captured but not automatically accepted.
+The designer enters the hazard type and cooking-area dimensions. The tool filters the encoded appliance-specific, single-nozzle rules from ANSUL R-102 Manual Part No. 418087, Rev. 13, ranks compatible options by flow-point demand, and shows each option's allowable nozzle-tip height range. The selected rule, limits, height range, page and figure are retained in the audit export.
 
-Current suggestion coverage includes single-nozzle, appliance-specific rules for fryers without dripboards, unobstructed ranges, griddles, woks, and several char-broiler types. It does not automate multiple-nozzle modularisation, fryer dripboards, overlapping protection, listed model-specific applications, obstruction variants, nozzle positioning/aiming or distribution piping.
+Current suggestion coverage includes single-nozzle, appliance-specific rules for fryers without dripboards, unobstructed ranges, griddles, woks, and several char-broiler types. It does not automate multiple-nozzle modularisation, fryer dripboards, overlapping protection, listed model-specific applications, obstruction variants, or nozzle positioning/aiming.
 
 ## Required inputs
 
 - Project, site, designer, jurisdiction, design approach, manual part/revision/date
 - Each supported appliance: tag, specific type and cooking dimensions
 - A user-selected nozzle from the compatible Rev. 13 suggestions
-- Tank/system model, controlled-manual flow-point capacity and reserve
-- Distribution-pipe length, fittings and elevation for audit
+- Tank/system arrangement from the supplied 11, 22, 33 and 44 flow-point configurations, plus an optional reserve
 - Duct, plenum, shutdown, manual actuation, detection and alarm-interface review flags
 
 ## Output
@@ -53,4 +52,4 @@ Important: browser storage belongs to the embedded origin and may be cleared. Th
 
 ## Recommended next phase
 
-After an authorised designer supplies a licensed, current rule dataset, add a versioned rule library for nozzle/application limits and distribution-piping validation. Each rule should include jurisdiction, manual part number, revision/date, section/table, effective date and a checksum. Never silently carry rules between manual revisions.
+When extending the rule library, each rule should include jurisdiction, manual part number, revision/date, section/table, effective date and a checksum. Never silently carry rules between manual revisions.
