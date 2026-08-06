@@ -21,7 +21,7 @@ Current suggestion coverage includes single-nozzle, appliance-specific rules for
 ## Required inputs
 
 - Project, site, designer, jurisdiction, design approach, manual part/revision/date
-- Each supported appliance: tag, specific type and cooking dimensions
+- Each supported appliance: tag, specific type, cooking dimensions and an explicit millimetre/inch unit
 - A user-selected nozzle from the compatible Rev. 13 suggestions
 - Tank/system arrangement from the supplied 11, 22, 33 and 44 flow-point configurations, plus an optional reserve
 - Duct, plenum, shutdown, manual actuation, detection and alarm-interface review flags
