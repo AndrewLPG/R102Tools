@@ -16,7 +16,7 @@ margin = available − required
 
 The designer enters the hazard type and cooking-area dimensions. The tool filters the encoded appliance-specific, single-nozzle rules from ANSUL R-102 Manual Part No. 418087, Rev. 13, ranks compatible options by flow-point demand, and shows each option's allowable nozzle-tip height range. The selected rule, limits, height range, page and figure are retained in the audit export.
 
-Current suggestion coverage includes single-nozzle, appliance-specific rules for fryers without dripboards, unobstructed ranges, griddles, woks, and several char-broiler types. It does not automate multiple-nozzle modularisation, fryer dripboards, overlapping protection, listed model-specific applications, obstruction variants, or nozzle positioning/aiming.
+Current suggestion coverage includes single-nozzle, appliance-specific rules for fryers without dripboards, unobstructed ranges, griddles, woks, salamander broilers and several char-broiler types. It also includes single-nozzle rectangular/round duct rules and one-module horizontal plenum arrangements. It does not automate multiple-nozzle duct or plenum modularisation, fryer dripboards, overlapping protection, listed model-specific applications, obstruction variants, or final nozzle positioning/aiming.
 
 ## Required inputs
 
